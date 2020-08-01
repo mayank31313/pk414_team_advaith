@@ -47,6 +47,7 @@
 
 <script>
 import { mapActions, mapState } from 'vuex'
+
 export default {
   created(){
     let token = window.localStorage.getItem('token')

@@ -2,6 +2,7 @@ import axios from 'axios'
 import Vue from 'vue'
 import { Notify } from 'quasar'
 import  { firebaseDb } from 'src/boot/firebase'
+import {kuzzle} from 'src/boot/kuzzle'
 
 let url = 'http://10.8.0.10:8000/api/'
 let messageRef
@@ -10,8 +11,10 @@ const state={
   userDetails:{},
   messages : {},
   users:{},
-  recommendedCrop:{}
+  recommendedCrop:{},
+  kuzzle: {}
 }
+
 const mutations={
   setUserDetails(state,payload){
     state.userDetails = payload
@@ -30,9 +33,37 @@ const mutations={
   },
   setRecommendedCrop(state, payload){
     state.recommendedCrop = payload
+  },
+  setKuzzle(state,kuzzleClient){
+    state.kuzzle = kuzzleClient
   }
 }
+
 const actions={
+    async sendMessageGoverment({},data){
+      await kuzzle.realtime.publish(
+        'sih',
+        'goverment-1',
+        data
+      );
+      console.log('Success');
+    },
+    async sendBroadcastFarmer({},data){
+      await kuzzle.realtime.publish(
+        'sih',
+        'farmer-all',
+        data
+      );
+      console.log('Success');
+    },
+    async sendMessageFarmer({},data){
+      await kuzzle.realtime.publish(
+        'sih',
+        'farmer-' + data.to,
+        data
+      );
+      console.log('Success');
+    },
     registerUser({ dispatch },payload){
       return axios.post(url+'register/',{
                                         "name":payload.name,
@@ -70,7 +101,6 @@ const actions={
   },
   Production({},payload){
     return axios.post(url+'production')
-
   },
   PricePrediction({},payload){
     return axios.get(url+'price/',payload)
@@ -85,14 +115,17 @@ const actions={
     })
 },
 loginUser({ dispatch },payload){
-    return axios.post(url+'login/',{
-                                      "username":payload.phone,
-                                      "password":payload.password
-                                  }
-    ,{ headers: {
+    return axios.post(url+'login/',
+    {
+      "username":payload.phone,
+      "password":payload.password
+    }
+    ,{ 
+      headers: {
       'content-type': 'application/json'
-      }})
-    .then(response => {
+      }
+    })
+    .then((response) => {
       if(response.status == 200){
         window.localStorage.setItem('username',payload.phone)
         payload.click=false
@@ -107,20 +140,23 @@ loginUser({ dispatch },payload){
     })
     .catch(error => {
       console.log(error.response)
-    })  
-
+    })
 },
 handleUserDetails( { commit }){
   let username = window.localStorage.getItem('username')
   return axios.get(url+'user/?username='+username)
-  .then(response =>{
+  .then(async (response) =>{
     if (response.status == 200){
       console.log('userDetails : ',response.data[0])
+      
       if(username==='0000000000'){
         let users = response.data
         for (let i = 0; i < response.data.length; i++) {
           if (response.data[i].id=='3'){
             let userDetails = response.data[i]
+            await kuzzle.realtime.subscribe("sih","goverment-" + userDetails.id,{},function(notifications){
+              console.log(notification)
+            })
             commit('setUserDetails', { userDetails })
           }
           else{
@@ -137,6 +173,15 @@ handleUserDetails( { commit }){
         }
       }else{
         let userDetails = response.data[0]
+        await kuzzle.realtime.subscribe("sih","farmer-" + userDetails.id,{},function(notifications){
+          console.log("Single Farmer ID")
+          console.log(notification)
+        })
+        
+        await kuzzle.realtime.subscribe("sih","farmer-all",{},function(notifications){
+          console.log("Farmer All")
+          console.log(notification)
+        })
         commit('setUserDetails', { userDetails })
       }
     }
@@ -203,6 +248,7 @@ logoutUser({ commit }){
     userId).push(payload.message)
  }
 } 
+
 const getters={
     users: state => {
       return state.users;
@@ -211,6 +257,7 @@ const getters={
       return state.recommendedCrop
     }
 }
+
 export default{
     namespaced:true,
     state,

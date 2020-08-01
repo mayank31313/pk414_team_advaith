@@ -82,10 +82,10 @@ export default {
     }
   },
   methods:{
-    ...mapActions('store',['loginUser']),
+    ...mapActions('store',['loginUser',"subscribeMessages"]),
     onSubmit(){
       this.user.click=true
-     this.loginUser(this.user)
+      this.loginUser(this.user)
     }
   }
 }
