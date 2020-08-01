@@ -1,0 +1,28 @@
+{
+    "chats":{
+        "1":{
+            "3":{
+                "MESSAGEID1":{
+                    "text":"Tell us your query?",
+                    "from":"them"
+                },
+                "MESSAGEID2":{
+                    "text":"Good thanks, don't have any",
+                    "from":"me"
+                }
+            }
+        },
+        "3":{
+            "1":{
+                "MESSAGEID1":{
+                    "text":"Tell us your query?",
+                    "from":"me"
+                },
+                "MESSAGEID2":{
+                    "text":"Good thanks, don't have any",
+                    "from":"them"
+                }
+            }
+        }
+    }
+}
