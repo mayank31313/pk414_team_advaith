@@ -102,6 +102,7 @@ class ProductionApi(generics.GenericAPIView):
     def post(self,request,format=None):
         print(request.data)
         serializer=ProductionSerializer(data=request.data)
+        serializer.user = request.query_params.get('user_id')
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"data":"Submited Successfully"})

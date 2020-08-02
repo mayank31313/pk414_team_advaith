@@ -27,6 +27,4 @@ class CropSerializer(serializers.Serializer):
 class ProductionSerializer(serializers.Serializer):
   class Meta:
     model=ProductionData
-    fields=("crop","quantity","hector")
-
-
+    fields=("crop","quantity","hector","user")

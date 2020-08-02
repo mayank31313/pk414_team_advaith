@@ -7,6 +7,7 @@ class User(AbstractBaseUser):
 	pincode = models.CharField(max_length=6)
 	city = models.CharField(max_length=20)
 	password = models.CharField(max_length=255)
+	role = models.CharField(max_length=40)
 
 	objects = UserManager()
 
@@ -17,5 +18,4 @@ class ProductionData(models.Model):
 	crop=models.CharField(max_length=15)
 	quantity=models.CharField(max_length=10)
 	hector=models.CharField(max_length=15)
-
-
+	user = models.ForeignKey(User,default=None,on_delete=models.CASCADE)
