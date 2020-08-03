@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'Cropify',
     'corsheaders',
     'knox',
+    'django_mysql',
 ]
 
 AUTH_USER_MODEL = 'Cropify.User'
@@ -105,6 +106,7 @@ DATABASES = {
         'PASSWORD': 'qwerty54321',
         'OPTIONS': {
          "init_command": "SET foreign_key_checks = 0;",
+         'charset': 'utf8mb4',
     },
     }
 }
