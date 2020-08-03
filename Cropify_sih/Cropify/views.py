@@ -1,6 +1,6 @@
 import json
 from django.shortcuts import render
-from django.db.models import Avg
+from django.db.models import Avg, Sum
 from rest_framework import generics, permissions, viewsets, views
 from rest_framework.response import Response
 from knox.models import AuthToken
@@ -11,7 +11,7 @@ from knox.views import LoginView as KnoxLoginView
 from .models import *
 from .model.recommender import Recommender, RecommenderEncoder
 from .model.price_predictor import PricePredictor
-import sys
+import sys, random
 import numpy as np
 import pandas as pd
 from datetime import date, timedelta
@@ -112,7 +112,7 @@ class ProductionApi(views.APIView):
         states = ProductionData.objects.order_by('state').values('state').distinct()
         response_data =  list()
         for state in states:
-            query_set = ProductionData.objects.filter(state=state['state']).values('crop').annotate(avg_qnt=Avg('quantity'))
+            query_set = ProductionData.objects.filter(state=state['state']).values('crop').annotate(avg_qnt=Sum('quantity'))
             print(query_set,state)
             response = dict()
             for production in query_set:
@@ -124,33 +124,86 @@ class ProductionApi(views.APIView):
         return Response(response_data)
 
 class FailureApi(views.APIView):
+    serlizer_class = FailureSerializer
     def post(self,request,format=None):
         serializer=FailureSerializer(data=request.data)        
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer._data)
+        return Response({
+            "Report Submitted": True,
+            "Token": "evshffgas-sdgfgbdhhf-" + str(random.randint(1000,2456))
+        })
     
     def get(self,request):
-        return Response(FailureModel.objects.all())
+        failures = FailureModel.objects.all()        
+        response = list()
+        for failure in failures:
+            response.append({
+                "crop" : failure.crop_name,
+                "description" : failure.description,
+                "area_affected" : failure.fail_area,
+                "stage": failure.stages,
+                "user" : {
+                    "id":failure.user.pk,
+                    "city": failure.user.city,
+                    "name": failure.user.name,
+                    "state": failure.user.state
+                },
+                "token": failure.unique_token,
+                'approx_loss': failure.approx_loss
+            })
+        
+        return Response(response)
 
 class FarmModuleStart(views.APIView):
-    def get(self,request):
+    def post(self,request):
         data = request.data
         land_area = data['land_area']
         crops = data['crops']
         soil_type = data['soil_type']
         resources = data['resources']
         state = data['state']
+        water_resources = data['water_resources']
+
 
         query_set = CropsDays.objects.filter(crop_name__in = crops)
+        response_list= list()
         for result_set in query_set:
             target_date = date.today() + timedelta(days=result_set.min_days_till_harvest)
             prices = PricesTable.objects.filter(price_date__gte = target_date, price_date__lte = target_date + timedelta(days=60),crop=result_set.crop_name).values('state','crop').annotate(avg_price = Avg('price'))           
-            query_set = ProductionData.objects.filter(state=prices[0]['state']).values('crop').annotate(avg_qnt=Avg('quantity'))
-            print(prices)
+            response = dict()
+            for state_price in prices:
+                query_set = ProductionData.objects.filter(
+                    state=state_price['state'],
+                    crop__in=crops).values('crop').annotate(avg_qnt=Sum('quantity')).order_by('avg_qnt')
+                
+                for data in query_set:
+                    response[data['crop']] = data['avg_qnt']
 
+            response_list.append({
+                "name": state_price['state'],
+                "data": response,
+                #"days_to_harvest": CropsDays.objects.filter(crop_name=crop).values('min_days_till_harvest')[0]['min_days_till_harvest'],
+                #"crop": crop,
+                #"state": "MP",
+                #"amt_harvesting": random.randint(3000,5000),
+                #"estimated_profit": random.randint(3000,6000),
+                #"irrigation": random.randint(500,1500)
+            })
+        return Response(response_list)    
 
-class FarmPlanApi(views.APIView):
-    def post(self,request):
-        data = request.data
-        pass        
+class DistributerApi(views.APIView):
+    def get(self,request):
+        query_set = ProductionData.objects.order_by('state','crop').all()
+        response_list = list()
+        for r in query_set:
+            response_list.append({
+                "name": r.crop,
+                "quantity": r.quantity,
+                "farmer": {
+                    "name": r.user.name,
+                    "city": r.user.city,
+                    "id": r.user.pk
+                }
+            })
+        return Response(response_list)

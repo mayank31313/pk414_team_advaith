@@ -34,7 +34,6 @@ class PricesTable(models.Model):
 class FailureModel(models.Model):
 	user = models.ForeignKey(User,default=None,on_delete=models.CASCADE)
 	description = models.CharField(max_length=255,default=None)
-	reason = models.CharField(max_length=200)
 	land_area = models.IntegerField()
 	approx_loss = models.IntegerField(default=0)
 	stages = models.IntegerField(default=0)
@@ -46,6 +45,7 @@ class CropsDays(models.Model):
 	crop_name = models.CharField(max_length=20)
 	min_days_till_harvest = models.IntegerField()
 	max_days_till_harvest = models.IntegerField()
+
 """
 class FarmPlanModelForm(mysql.Model):
 	land_area = models.IntegerField()
@@ -61,3 +61,4 @@ class FarmPlanModel(mysql.Model):
 	amount_harvest = models.IntegerField()
 	estimated_profit = models.IntegerField()
 	irrigation_required = models.IntegerField()
+	user = models.ForeignKey(User,default=None,on_delete=models.CASCADE)

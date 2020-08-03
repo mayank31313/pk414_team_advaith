@@ -46,4 +46,4 @@ class ProductionSerializer(serializers.ModelSerializer):
 class FailureSerializer(serializers.ModelSerializer):
   class Meta:
     model=FailureModel
-    fields=("user","crop_name","fail_area","description","reason","land_area","stages","unique_token","approx_loss")
+    fields=("user","crop_name","fail_area","description","land_area","stages","unique_token","approx_loss")

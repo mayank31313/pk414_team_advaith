@@ -12,5 +12,6 @@ urlpatterns = [
     path('api/logoutall/', knox_views.LogoutAllView.as_view(), name='logoutall'),
     path('api/user/',userDetails.as_view(),name='getuser'),
     path('api/failures/',FailureApi.as_view(),name='failure'),
-    path('api/farm-start',FarmModuleStart.as_view(), name = "Farm Planner")
+    path('api/farm-start/',FarmModuleStart.as_view(), name = "Farm Planner"),
+    path('api/distributer/',DistributerApi.as_view(),name = "distributer")
 ]
